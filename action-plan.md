@@ -54,7 +54,6 @@ O sistema utiliza uma arquitetura multi-tenant isolada no nível do banco de dad
 O "coração" operacional da secretaria.
 *   Colunas customizáveis (Pendente, Em Andamento, Concluído).
 *   Etiquetas por categoria (Batismo, Casamento, Dízimo).
-*   Lembretes automáticos via Edge Functions.
 
 ### Módulo 2: WhatsApp & Chatbot Configurável
 Diferencial competitivo para automação de atendimento.

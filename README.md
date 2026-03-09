@@ -31,7 +31,9 @@ O Lumen utiliza uma estrutura robusta no **Supabase**:
 - `parishes`: Entidade central das instituições cadastradas.
 - `profiles`: Extensão da autenticação com papéis (`superadmin`, `admin`, `user`).
 - `feedback`: Canal de escuta ativa para melhorias contínuas.
-- *(Próximos)* `tasks`, `whatsapp_flows`, `messages_log`.
+- `kanban_columns` & `kanban_tasks`: Estrutura do módulo de gestão de demandas.
+- `parish_notes`: Sistema de lembretes rápidos por paróquia.
+- *(Próximos)* `whatsapp_flows`, `messages_log`, `parish_members`.
 
 ---
 
@@ -71,8 +73,8 @@ npm run dev
 
 1.  [x] **Setup Inicial**: Ambiente, Auth e RLS Base.
 2.  [x] **Dashboard Superadmin**: Gestão de Paróquias e Feedback.
-3.  [ ] **Módulo Paroquial (Admin)**: Gestão de funções e usuários da paróquia.
-4.  [ ] **Módulo Kanban**: Quadros dinâmicos e etiquetas.
+3.  [x] **Módulo Paroquial (Admin)**: Gestão de funções e usuários da paróquia.
+4.  [x] **Módulo Kanban**: Quadros dinâmicos, etiquetas e persistência de dados.
 5.  [ ] **Integração WhatsApp**: Conexão Evolution API e fluxos de bot.
 6.  [ ] **Relatórios**: Métricas de atendimento e performance da secretaria.
 

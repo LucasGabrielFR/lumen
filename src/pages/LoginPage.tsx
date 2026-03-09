@@ -35,7 +35,7 @@ export const LoginPage = () => {
 
     if (profile?.role === 'superadmin') {
       navigate('/admin')
-    } else if (profile?.role === 'admin') {
+    } else if (profile?.role === 'admin' || profile?.role === 'user') {
       navigate('/parish')
     } else {
       navigate('/')

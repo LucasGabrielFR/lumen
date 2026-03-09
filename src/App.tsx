@@ -4,6 +4,9 @@ import { LoginPage } from './pages/LoginPage'
 import { SuperAdminLayout } from './components/layouts/SuperAdminLayout'
 import { ParishesPage } from './pages/superadmin/ParishesPage'
 import { FeedbackPage } from './pages/superadmin/FeedbackPage'
+import { ParishLayout } from './components/layouts/ParishLayout'
+import { DashboardPage as ParishDashboard } from './pages/parish/DashboardPage'
+import { KanbanPage } from './pages/parish/KanbanPage'
 
 function App() {
   return (
@@ -31,6 +34,13 @@ function App() {
             <Route path="parishes" element={<ParishesPage />} />
             <Route path="feedback" element={<FeedbackPage />} />
             <Route path="settings" element={<div className="p-10 text-center py-20 bg-white rounded-3xl shadow-sm border border-slate-100"><h2 className="text-2xl font-bold">Configurações do Sistema</h2><p className="text-slate-500 mt-2">Personalize a plataforma global.</p></div>} />
+          </Route>
+
+          {/* Parish Routes */}
+          <Route path="/parish" element={<ParishLayout />}>
+            <Route index element={<ParishDashboard />} />
+            <Route path="kanban" element={<KanbanPage />} />
+            {/* Future routes: automation, members, settings */}
           </Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />

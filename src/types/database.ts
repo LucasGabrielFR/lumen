@@ -59,6 +59,128 @@ export type Database = {
           },
         ]
       }
+      kanban_columns: {
+        Row: {
+          created_at: string
+          id: string
+          order: number
+          parish_id: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order?: number
+          parish_id?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order?: number
+          parish_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kanban_columns_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kanban_tasks: {
+        Row: {
+          column_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          order: number
+          parish_id: string | null
+          tags: string[] | null
+          title: string
+        }
+        Insert: {
+          column_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order?: number
+          parish_id?: string | null
+          tags?: string[] | null
+          title: string
+        }
+        Update: {
+          column_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order?: number
+          parish_id?: string | null
+          tags?: string[] | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kanban_tasks_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "kanban_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kanban_tasks_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parish_notes: {
+        Row: {
+          color: string | null
+          content: string
+          created_at: string
+          id: string
+          parish_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          parish_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          parish_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parish_notes_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parish_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parishes: {
         Row: {
           address: string | null

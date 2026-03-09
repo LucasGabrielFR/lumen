@@ -2,7 +2,9 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Tables } from '../types/database'
 
-type Profile = Tables<'profiles'>
+type Profile = Tables<'profiles'> & {
+  parishes?: { name: string } | null
+}
 
 interface AuthContextType {
   user: any | null
@@ -51,14 +53,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, parishes(name)')
       .eq('id', userId)
       .single()
 
     if (error) {
       console.error('Error fetching profile:', error)
     } else {
-      setProfile(data)
+      console.log('Profile fetched:', data)
+      if (data && Array.isArray(data.parishes)) {
+        data.parishes = data.parishes[0]
+      }
+      setProfile(data as Profile)
     }
     setLoading(false)
   }
