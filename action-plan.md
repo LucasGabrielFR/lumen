@@ -19,6 +19,17 @@ O Lumen visa modernizar a comunicação e gestão das paróquias, centralizando 
 
 ---
 
+## 4. Identidade Visual e Branding
+O projeto utiliza uma identidade visual baseada no logo oficial (`public/lumen.png`), com uma paleta de cores que reflete sobriedade e modernidade:
+*   **Lumen Navy (#0F2A4A)**: Cor principal de contraste e seriedade.
+*   **Lumen Teal/Blue (#2A5A83, #4A8C94)**: Cores de acento para interatividade.
+*   **Lumen Gold (#D4AF37)**: Cor de destaque para elementos de atenção e status.
+
+**Tratamento de Imagem:** 
+O logo deve ser aplicado com tratamento de crop e escala (object-cover) para garantir foco nos elementos centrais da cúpula/cruz, especialmente em miniaturas e avatares.
+
+---
+
 ## 3. Arquitetura e Segurança (Multi-tenancy)
 O sistema utiliza uma arquitetura multi-tenant isolada no nível do banco de dados através de **Row Level Security (RLS)** do PostgreSQL.
 
@@ -58,6 +69,7 @@ Módulo exclusivo para a gestão da plataforma como um todo.
 *   **Métricas Globais:** Quantitativo de paróquias ativas, volume total de mensagens e usuários.
 *   **Auditoria de Sistema:** Logs de acesso e alterações em configurações globais.
 *   **Blindagem de Dados:** Interface de gestão que exclui acesso aos dados privados (confissões, detalhes de tarefas, histórico de chats privados).
+*   **Central de Sugestões e Reports:** Local centralizado para receber feedback, sugestões de melhorias e reports de bugs enviados pelos usuários de todas as paróquias, com identificação clara do autor e da paróquia de origem.
 
 ---
 
@@ -83,6 +95,7 @@ Módulo exclusivo para a gestão da plataforma como um todo.
 ## 7. Roadmap Inicial
 1.  [ ] Configuração do ambiente (Vite + Tailwind + Supabase).
 2.  [ ] Implementação do Auth e RLS Base.
-3.  [ ] Desenvolvimento do Dashboard Superadmin (Cadastro de Paróquias).
-4.  [ ] Implementação do Kanban básico.
-5.  [ ] Integração com Evolution API e Fluxos Básicos.
+3.  [ ] Desenvolvimento do Dashboard Superadmin (Cadastro de Paróquias, Gestão de Acessos e Central de Feedback).
+4.  [ ] Canal de Sugestões e Reports (Interface do usuário e visualização admin).
+5.  [ ] Implementação do Kanban básico.
+6.  [ ] Integração com Evolution API e Fluxos Básicos.

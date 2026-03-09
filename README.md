@@ -1,73 +1,86 @@
-# React + TypeScript + Vite
+# 🕯️ Lumen - Gestão Paroquial Inteligente
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+O **Lumen** é uma plataforma multi-tenant projetada para modernizar a gestão e comunicação interna das paróquias católicas. Integrando um quadro **Kanban** dinâmico com automação de atendimento via **WhatsApp (Evolution API)**, o Lumen centraliza as demandas da secretaria em um fluxo inteligente e organizado.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🌟 Principais Recursos
 
-## React Compiler
+- **🗂️ Gestão de Demandas (Kanban)**: Organize batismos, casamentos, dízimos e outras demandas em um quadro intuitivo com drag-and-drop.
+- **🤖 Automação WhatsApp**: Chatbot configurável que direciona atendimentos automaticamente para o Kanban.
+- **🛡️ Multi-tenancy (RLS)**: Isolamento completo de dados entre paróquias no nível do banco de dados através de **Row Level Security (RLS)**.
+- **📊 Portal Superadmin**: Gestão global da plataforma, controle de instâncias e monitoramento de feedback (sugestões e reports).
+- **🎨 UI Moderna**: Interface premium construída com **Tailwind CSS v4**, focada em usabilidade e estética.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🛠️ Stack Tecnológica
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend**: [React v19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vite.dev/)
+- **Estilização**: [Tailwind CSS v4](https://tailwindcss.com/) + [Lucide Icons](https://lucide.dev/)
+- **Backend & Auth**: [Supabase](https://supabase.com/) (PostgreSQL + RLS + Edge Functions)
+- **Integração WhatsApp**: [Evolution API](https://evolution-api.com/)
+- **Estado**: [TanStack Query v5](https://tanstack.com/query/latest)
+- **Roteamento**: [React Router v6](https://reactrouter.com/)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🏗️ Arquitetura de Dados
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+O Lumen utiliza uma estrutura robusta no **Supabase**:
+- `parishes`: Entidade central das instituições cadastradas.
+- `profiles`: Extensão da autenticação com papéis (`superadmin`, `admin`, `user`).
+- `feedback`: Canal de escuta ativa para melhorias contínuas.
+- *(Próximos)* `tasks`, `whatsapp_flows`, `messages_log`.
+
+---
+
+## 🚀 Como Executar Localmente
+
+### Pré-requisitos
+- Node.js (v18+)
+- Conta no Supabase
+
+### Instalação
+1. Clone o repositório:
+```bash
+git clone https://github.com/LucasGabrielFR/lumen.git
+cd lumen
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Instale as dependências:
+```bash
+npm install
 ```
+
+3. Configure o ambiente:
+Crie um arquivo `.env.local` na raiz com suas chaves do Supabase:
+```env
+VITE_SUPABASE_URL=seu-url-supabase
+VITE_SUPABASE_ANON_KEY=sua-chave-anon
+```
+
+4. Inicie o servidor de desenvolvimento:
+```bash
+npm run dev
+```
+
+---
+
+## 🧭 Roadmap do Projeto
+
+1.  [x] **Setup Inicial**: Ambiente, Auth e RLS Base.
+2.  [x] **Dashboard Superadmin**: Gestão de Paróquias e Feedback.
+3.  [ ] **Módulo Paroquial (Admin)**: Gestão de funções e usuários da paróquia.
+4.  [ ] **Módulo Kanban**: Quadros dinâmicos e etiquetas.
+5.  [ ] **Integração WhatsApp**: Conexão Evolution API e fluxos de bot.
+6.  [ ] **Relatórios**: Métricas de atendimento e performance da secretaria.
+
+---
+
+## 📄 Licença
+
+Este projeto é desenvolvido para modernização da gestão eclesiástica. Todos os direitos reservados.
+
+---
+*Lumen: A luz que guia sua gestão paroquial.*
