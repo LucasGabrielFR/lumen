@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
 import { AuthProvider } from './contexts/AuthContext'
 import { LoginPage } from './pages/LoginPage'
 import { SuperAdminLayout } from './components/layouts/SuperAdminLayout'
@@ -7,12 +9,18 @@ import { FeedbackPage } from './pages/superadmin/FeedbackPage'
 import { ParishLayout } from './components/layouts/ParishLayout'
 import { DashboardPage as ParishDashboard } from './pages/parish/DashboardPage'
 import { KanbanPage } from './pages/parish/KanbanPage'
+import { AutomationPage } from './pages/parish/AutomationPage'
+import { FlowsPage } from './pages/parish/FlowsPage'
+
+const queryClient = new QueryClient()
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+    <QueryClientProvider client={queryClient}>
+      <Toaster richColors position="top-right" />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           
           {/* Superadmin Routes */}
@@ -40,13 +48,16 @@ function App() {
           <Route path="/parish" element={<ParishLayout />}>
             <Route index element={<ParishDashboard />} />
             <Route path="kanban" element={<KanbanPage />} />
-            {/* Future routes: automation, members, settings */}
+            <Route path="automation" element={<AutomationPage />} />
+            <Route path="automation/flows" element={<FlowsPage />} />
+            {/* Future routes: members, settings */}
           </Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+    </QueryClientProvider>
   )
 }
 

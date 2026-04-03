@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_flows: {
+        Row: {
+          created_at: string | null
+          flow_data: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          parish_id: string | null
+          trigger_keywords: string[] | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          flow_data?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parish_id?: string | null
+          trigger_keywords?: string[] | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          flow_data?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parish_id?: string | null
+          trigger_keywords?: string[] | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_flows_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_messages_log: {
+        Row: {
+          content: string | null
+          created_at: string
+          direction: string | null
+          flow_id: string | null
+          id: string
+          metadata: Json | null
+          node_id: string | null
+          node_type: string | null
+          parish_id: string | null
+          session_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          direction?: string | null
+          flow_id?: string | null
+          id?: string
+          metadata?: Json | null
+          node_id?: string | null
+          node_type?: string | null
+          parish_id?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          direction?: string | null
+          flow_id?: string | null
+          id?: string
+          metadata?: Json | null
+          node_id?: string | null
+          node_type?: string | null
+          parish_id?: string | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_messages_log_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "automation_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_messages_log_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_messages_log_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "automation_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_sessions: {
+        Row: {
+          current_flow_id: string | null
+          current_node_id: string | null
+          id: string
+          last_interaction: string | null
+          metadata: Json | null
+          parish_id: string | null
+          remote_jid: string
+          variables: Json | null
+        }
+        Insert: {
+          current_flow_id?: string | null
+          current_node_id?: string | null
+          id?: string
+          last_interaction?: string | null
+          metadata?: Json | null
+          parish_id?: string | null
+          remote_jid: string
+          variables?: Json | null
+        }
+        Update: {
+          current_flow_id?: string | null
+          current_node_id?: string | null
+          id?: string
+          last_interaction?: string | null
+          metadata?: Json | null
+          parish_id?: string | null
+          remote_jid?: string
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_sessions_current_flow_id_fkey"
+            columns: ["current_flow_id"]
+            isOneToOne: false
+            referencedRelation: "automation_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_sessions_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           content: string
@@ -184,6 +337,8 @@ export type Database = {
       parishes: {
         Row: {
           address: string | null
+          business_hours_end: string | null
+          business_hours_start: string | null
           city: string | null
           cnpj: string | null
           created_at: string | null
@@ -193,9 +348,14 @@ export type Database = {
           phone: string | null
           state: string | null
           status: Database["public"]["Enums"]["parish_status"] | null
+          whatsapp_connected: boolean | null
+          whatsapp_instance_id: string | null
+          whatsapp_token: string | null
         }
         Insert: {
           address?: string | null
+          business_hours_end?: string | null
+          business_hours_start?: string | null
           city?: string | null
           cnpj?: string | null
           created_at?: string | null
@@ -205,9 +365,14 @@ export type Database = {
           phone?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["parish_status"] | null
+          whatsapp_connected?: boolean | null
+          whatsapp_instance_id?: string | null
+          whatsapp_token?: string | null
         }
         Update: {
           address?: string | null
+          business_hours_end?: string | null
+          business_hours_start?: string | null
           city?: string | null
           cnpj?: string | null
           created_at?: string | null
@@ -217,6 +382,9 @@ export type Database = {
           phone?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["parish_status"] | null
+          whatsapp_connected?: boolean | null
+          whatsapp_instance_id?: string | null
+          whatsapp_token?: string | null
         }
         Relationships: []
       }
@@ -281,116 +449,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {

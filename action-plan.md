@@ -12,9 +12,8 @@ O Lumen visa modernizar a comunicação e gestão das paróquias, centralizando 
 ## 2. Stack Tecnológica
 *   **Frontend:** React (Vite) + TypeScript.
 *   **Estilização:** Tailwind CSS + Shadcn/UI (especialmente para Dashboards e formulários).
-*   **Gerenciamento de Estado:** TanStack Query (React Query).
 *   **Backend & Banco de Dados:** Supabase (PostgreSQL + RLS + Edge Functions).
-*   **Integração WhatsApp:** Evolution API (Open Source) para instâncias dedicadas por paróquia.
+*   **Integração WhatsApp:** Z-API (Solução Cloud) para integração de WhatsApp por paróquia.
 *   **Kanban:** `@dnd-kit/core` para drag-and-drop.
 
 ---
@@ -57,14 +56,14 @@ O "coração" operacional da secretaria.
 
 ### Módulo 2: WhatsApp & Chatbot Configurável
 Diferencial competitivo para automação de atendimento.
-*   Conexão via QR Code através da Evolution API.
-*   Interface para o secretário definir fluxos dinâmicos.
+*   Conexão via QR Code através da Z-API.
+*   Interface para o secretário gerenciar credenciais e definir fluxos dinâmicos.
 *   Criação automática de tarefas no Kanban baseada na conversa.
 
 ### Módulo 3: Gestão Superadmin (Módulo Administrativo Global)
 Módulo exclusivo para a gestão da plataforma como um todo.
-*   **Registro de Paróquias:** Criação, edição e suspensão de instâncias paroquiais.
-*   **Gestão de Instâncias API:** Monitoramento do status da Evolution API por paróquia.
+*   **Registro de Paróquias:** Criação, edição e suspensão de contas.
+*   **Gestão de Instâncias API:** Centralização do cadastro de instâncias Z-API por paróquia.
 *   **Métricas Globais:** Quantitativo de paróquias ativas, volume total de mensagens e usuários.
 *   **Auditoria de Sistema:** Logs de acesso e alterações em configurações globais.
 *   **Blindagem de Dados:** Interface de gestão que exclui acesso aos dados privados (confissões, detalhes de tarefas, histórico de chats privados).
@@ -92,9 +91,32 @@ Módulo exclusivo para a gestão da plataforma como um todo.
 ---
 
 ## 7. Roadmap Inicial
-1.  [ ] Configuração do ambiente (Vite + Tailwind + Supabase).
-2.  [ ] Implementação do Auth e RLS Base.
-3.  [ ] Desenvolvimento do Dashboard Superadmin (Cadastro de Paróquias, Gestão de Acessos e Central de Feedback).
-4.  [ ] Canal de Sugestões e Reports (Interface do usuário e visualização admin).
-5.  [ ] Implementação do Kanban básico.
-6.  [ ] Integração com Evolution API e Fluxos Básicos.
+1.  [x] Configuração do ambiente (Vite + Tailwind + Supabase).
+2.  [x] Implementação do Auth e RLS Base.
+3.  [x] Desenvolvimento do Dashboard Superadmin.
+4.  [x] Canal de Sugestões e Reports.
+5.  [x] Implementação do Kanban básico.
+6.  [x] **Organização do Quadro de Automação (Layout & UX).**
+7.  [x] **Configuração da estrutura Z-API.**
+8.  [x] Implementação do serviço de conexão local (QR Code & Status).
+9.  [ ] Desenvolvimento do Motor de Fluxos (Engine).
+10. [ ] Integração completa Chat-to-Kanban.
+
+---
+
+## 8. Detalhamento Técnico: Automação (Z-API)
+
+### Passo 1: Infraestrutura API
+*   **Servidor:** Plataforma de Nuvem da Z-API (SaaS).
+*   **Instâncias:** Gerenciadas pelo painel da Z-API e cadastradas na plataforma localmente por paróquia via Client Token e Instance ID.
+
+### Passo 2: Integração de Backend (Lumen Core)
+*   **Services:** Implementação de `zapi.ts` para abstrair chamadas à API (Get Status, QR Code, Disconnect, SendMessage).
+*   **Webhooks:** Endpoint no Supabase Edge Functions configurado no painel da Z-API para processar eventos:
+    *   `on-message-received`: Captura de novas mensagens recebidas.
+    *   `on-whatsapp-status`: Atualização de status da instância.
+
+### Passo 3: Engine de Fluxos (Chatbot)
+*   **Modelo de Dados:** Tabela `automation_flows` com esquema JSONB para definição de nós e arestas.
+*   **Lógica de Execução:** Interpretador que identifica palavras-chave e navega pelo grafo de decisões definido pela paróquia.
+*   **Acionadores de Kanban:** Implementação de hooks que chamam a API do Supabase para inserir registros em `tasks` quando um fluxo exige ação humana.
