@@ -188,7 +188,9 @@ app.post('/webhook/uazapi', async (req, res) => {
 
             if (flow && flow.is_active) {
               console.log(`🤖 Continuing Flow: ${flow.name}`);
-              await interpreter.execute(parishId, sender, flow, session, textContent);
+              // Track message received in an active session
+              await interpreter.trackMetric(parishId as string, flow.id, 'message_in');
+              await interpreter.execute(parishId as string, sender, flow, session, textContent);
               continue;
             }
           }
@@ -231,7 +233,9 @@ app.post('/webhook/uazapi', async (req, res) => {
           if (sessionErr) console.error('Error creating session:', sessionErr);
 
           if (newSession) {
-            await interpreter.execute(parishId, sender, matchedFlow, newSession);
+            // Track message received on flow start
+            await interpreter.trackMetric(parishId as string, matchedFlow.id, 'message_in');
+            await interpreter.execute(parishId as string, sender, matchedFlow, newSession);
           }
         } else {
           console.log(`⏭️ No flow matched for: "${textContent}"`);

@@ -117,6 +117,47 @@ export class FlowInterpreter {
       }]);
   }
 
+  // Metric tracking helper
+  public async trackMetric(parishId: string, flowId: string, metricType: string, metadata: any = {}) {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data, error } = await this.supabase
+        .from('flow_analytics_metrics')
+        .select('id, count')
+        .eq('parish_id', parishId)
+        .eq('flow_id', flowId)
+        .eq('metric_type', metricType)
+        .eq('date', today)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        await this.supabase
+          .from('flow_analytics_metrics')
+          .update({ 
+            count: (data.count || 0) + 1,
+            metadata: { ...(data.metadata || {}), ...metadata }
+          })
+          .eq('id', data.id);
+      } else {
+        await this.supabase
+          .from('flow_analytics_metrics')
+          .insert([{
+            parish_id: parishId,
+            flow_id: flowId,
+            metric_type: metricType,
+            date: today,
+            count: 1,
+            metadata
+          }]);
+      }
+    } catch (err) {
+      console.error(`[Metrics] Error tracking ${metricType}:`, err);
+    }
+  }
+
   private async saveSessionState(sessionId: string, nodeId: string, updates: any = {}) {
     await this.supabase
       .from('automation_sessions')
@@ -145,6 +186,11 @@ export class FlowInterpreter {
       hora_atual: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       ...(session.variables || {}) // Merge stored variables into context
     };
+
+    // Track Session Start if it's the beginning
+    if (!currentNodeId && !session.call_stack?.length) {
+      await this.trackMetric(parishId, flow.id, 'session_started');
+    }
 
     // If no node set, start with the root node
     if (!currentNodeId) {
@@ -511,6 +557,7 @@ export class FlowInterpreter {
         
         await this.provider.sendMessage(phone, text);
         await this.logExecution(parishId, session.id, flow.id, currentNode, 'outbound', text);
+        await this.trackMetric(parishId, flow.id, 'handoff');
         
         // Create Kanban task
         await this.createHandoffTask(parishId, phone, context.contact_name, {
@@ -530,14 +577,181 @@ export class FlowInterpreter {
         
         await this.provider.sendMessage(phone, text);
         await this.logExecution(parishId, session.id, flow.id, currentNode, 'outbound', text);
+        await this.trackMetric(parishId, flow.id, 'session_completed');
         
+        // Handle Return from Sub-flow
+        const callStack = session.call_stack || [];
+        if (callStack.length > 0) {
+          const lastCall = callStack.pop();
+          console.log(`[Flow] Sub-flow ended. Returning to ${lastCall.flow_id} at node ${lastCall.return_node_id}`);
+          
+          const { data: parentFlow } = await this.supabase
+            .from('automation_flows')
+            .select('*')
+            .eq('id', lastCall.flow_id)
+            .single();
+
+          if (parentFlow) {
+            // Update session state before resuming
+            await this.saveSessionState(session.id, lastCall.return_node_id, { 
+              current_flow_id: parentFlow.id,
+              call_stack: callStack 
+            });
+
+            if (lastCall.return_node_id) {
+              currentNodeId = lastCall.return_node_id;
+              // Continue directly to the return node in the parent flow
+              const updatedSession = { ...session, current_node_id: lastCall.return_node_id, current_flow_id: parentFlow.id, call_stack: callStack };
+              return this.execute(parishId, phone, parentFlow, updatedSession);
+            }
+          }
+        }
+
         // Delete session to end automation
         await this.supabase.from('automation_sessions').delete().eq('id', session.id);
         hasMoreSteps = false;
       }
 
+      // === TYPE: subFlowNode ===
+      else if (currentNode.type === 'subFlowNode') {
+        const subFlowId = currentNode.data?.subFlowId;
+        const nextEdge = edges.find((e: any) => e.source === currentNode.id);
+
+        if (!subFlowId) {
+          console.warn(`[Flow] subFlowNode: No subFlowId specified.`);
+          if (nextEdge) {
+            currentNodeId = nextEdge.target;
+            continue;
+          }
+          hasMoreSteps = false;
+          break;
+        }
+
+        const { data: subFlow } = await this.supabase
+          .from('automation_flows')
+          .select('*')
+          .eq('id', subFlowId)
+          .single();
+
+        if (!subFlow) {
+          console.warn(`[Flow] subFlowNode: Sub-flow ${subFlowId} not found.`);
+          if (nextEdge) {
+            currentNodeId = nextEdge.target;
+            continue;
+          }
+          hasMoreSteps = false;
+          break;
+        }
+
+        // Push current to stack
+        const callStack = session.call_stack || [];
+        callStack.push({
+          flow_id: flow.id,
+          return_node_id: nextEdge ? nextEdge.target : null
+        });
+
+        console.log(`[Flow] Calling Sub-flow: ${subFlow.name}. Stack depth: ${callStack.length}`);
+        
+        await this.saveSessionState(session.id, null, {
+          current_flow_id: subFlow.id,
+          call_stack: callStack
+        });
+
+        const updatedSession = { ...session, current_node_id: null, current_flow_id: subFlow.id, call_stack: callStack };
+        return this.execute(parishId, phone, subFlow, updatedSession);
+      }
+
+      // === TYPE: businessHoursNode ===
+      else if (currentNode.type === 'businessHoursNode') {
+        console.log(`[Flow] Executing businessHoursNode...`);
+        const schedule = currentNode.data?.schedule || {};
+        
+        const nowInParish = new Date();
+        const dayKey = nowInParish.getDay().toString(); // Use numeric string (0-6)
+        const dayConfig = schedule[dayKey] || { active: false };
+
+        let isOpen = false;
+        if (dayConfig.active) {
+          const currentTime = nowInParish.getHours() * 60 + nowInParish.getMinutes();
+          const [startH, startM] = (dayConfig.start || "08:00").split(':').map(Number);
+          const [endH, endM] = (dayConfig.end || "18:00").split(':').map(Number);
+          
+          const startTime = startH * 60 + startM;
+          const endTime = endH * 60 + endM;
+          
+          if (currentTime >= startTime && currentTime <= endTime) {
+            isOpen = true;
+          }
+        }
+
+        console.log(`[Flow] Business Hours check for day ${dayKey}: ${isOpen ? 'OPEN' : 'CLOSED'}`);
+        const handleId = isOpen ? 'open' : 'closed'; // Use 'open'/'closed' handles from UI
+        const nextEdge = edges.find((e: any) => e.source === currentNode.id && e.sourceHandle === handleId);
+
+        if (nextEdge) {
+          currentNodeId = nextEdge.target;
+          continue;
+        }
+        hasMoreSteps = false;
+      }
+
+      // === TYPE: taggingNode ===
+      else if (currentNode.type === 'taggingNode') {
+        const tags = currentNode.data?.tags || []; // Use 'tags' array from UI
+        const topic = currentNode.data?.topic;
+        
+        console.log(`[Flow] taggingNode: Processing tags [${tags.join(', ')}] and topic "${topic}" for ${phone}`);
+        
+        // 1. Get current tags
+        const { data: contact } = await this.supabase
+          .from('whatsapp_contacts')
+          .select('tags')
+          .eq('parish_id', parishId)
+          .eq('phone', phone)
+          .maybeSingle();
+
+        let currentTags = contact?.tags || [];
+        
+        // Add new tags that aren't already present
+        tags.forEach((tag: string) => {
+          if (!currentTags.includes(tag)) {
+            currentTags.push(tag);
+          }
+        });
+
+        // 2. Update DB with tags and optional topic
+        await this.supabase
+          .from('whatsapp_contacts')
+          .update({ 
+             tags: currentTags,
+             ...(topic ? { last_topic: topic } : {})
+          })
+          .eq('parish_id', parishId)
+          .eq('phone', phone);
+
+        const nextEdge = edges.find((e: any) => e.source === currentNode.id);
+        if (nextEdge) {
+          currentNodeId = nextEdge.target;
+          continue;
+        }
+        hasMoreSteps = false;
+      }
+
       else {
         console.warn(`Interpreter: Tipo de nó não reconhecido: ${currentNode.type}. Finalizando sessão por segurança.`);
+        
+        // Final fallback: try to return from subflow if we hit an unknown node or end of execution
+        const callStack = session.call_stack || [];
+        if (callStack.length > 0) {
+           const lastCall = callStack.pop();
+           const { data: parentFlow } = await this.supabase.from('automation_flows').select('*').eq('id', lastCall.flow_id).single();
+           if (parentFlow) {
+              await this.saveSessionState(session.id, lastCall.return_node_id, { current_flow_id: parentFlow.id, call_stack: callStack });
+              const updatedSession = { ...session, current_node_id: lastCall.return_node_id, current_flow_id: parentFlow.id, call_stack: callStack };
+              return this.execute(parishId, phone, parentFlow, updatedSession);
+           }
+        }
+
         await this.supabase.from('automation_sessions').delete().eq('id', session.id);
         hasMoreSteps = false;
       }

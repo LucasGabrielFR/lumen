@@ -82,6 +82,15 @@ npx tsx index.ts
 *Em seguida, será necessário usar o `ngrok` e configurar a URL nas propriedades da instância na Uazapi.*
 
 ---
+Credenciais de acesso para teste:
+Paróquia:
+email: [lucasgabrielvg26@gmail.com]
+senha: [password123]
+
+Admin:
+email: [portal@lumen.com]
+senha: [lumen2026]
+---
 
 ## 🧭 Roadmap do Projeto
 

@@ -22,7 +22,11 @@ import { WaitNode } from './nodes/WaitNode'
 import { SetVariableNode } from './nodes/SetVariableNode'
 import { FindContactNode } from './nodes/FindContactNode'
 import { SaveContactNode } from './nodes/SaveContactNode'
+import { BusinessHoursNode } from './nodes/BusinessHoursNode'
+import { TaggingNode } from './nodes/TaggingNode'
+import { SubFlowNode } from './nodes/SubFlowNode'
 import DeletableEdge from './DeletableEdge'
+import { useAuth } from '../../../contexts/AuthContext'
 import { 
   Play, 
   MessageSquare, 
@@ -56,7 +60,10 @@ const nodeTypes = {
   findContactNode: FindContactNode,
   saveContactNode: SaveContactNode,
   handoffNode: HandoffNode,
-  endNode: EndNode
+  endNode: EndNode,
+  businessHoursNode: BusinessHoursNode,
+  taggingNode: TaggingNode,
+  subFlowNode: SubFlowNode
 }
 
 const edgeTypes = {
@@ -112,6 +119,8 @@ export function FlowBuilder({
   onAddKeyword,
   onRemoveKeyword
 }: FlowBuilderProps) {
+  const { profile } = useAuth()
+  const isAdmin = profile?.role === 'admin'
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes || [])
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges || [])
   const [nodeToDelete, setNodeToDelete] = useState<string | null>(null)
@@ -266,6 +275,15 @@ export function FlowBuilder({
       case 'endNode':
         newNode = { id, type, position, data: { id, text: 'Obrigado pelo seu contato! O atendimento foi encerrado.' } }
         break
+      case 'businessHoursNode':
+        newNode = { id, type, position, data: { id } }
+        break
+      case 'taggingNode':
+        newNode = { id, type, position, data: { id, tags: [], topic: '' } }
+        break
+      case 'subFlowNode':
+        newNode = { id, type, position, data: { id, subFlowId: '' } }
+        break
       default:
         return
     }
@@ -339,6 +357,25 @@ export function FlowBuilder({
             </div>
           </div>
 
+          {/* Fluxo (Específico de Admin/Intermediário) */}
+          {(isAdmin) && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-4 w-1 bg-indigo-500"></div>
+                <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-[0.3em]">Módulos</h4>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                <button 
+                  onClick={() => addNode('subFlowNode')}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-white border-2 border-lumen-navy hover:bg-indigo-500 hover:text-white transition-all hover:-translate-y-0.5 hover:translate-x-0.5 hover:shadow-none shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] group rounded-none"
+                >
+                  <Layers className="w-4 h-4" />
+                  <span className="font-black text-[11px] uppercase tracking-wider">Chamar Sub-Fluxo</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Lógica */}
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -369,6 +406,14 @@ export function FlowBuilder({
                 <Tag className="w-4 h-4" />
                 <span className="font-black text-[11px] uppercase tracking-wider">Definir Variável</span>
               </button>
+
+              <button 
+                onClick={() => addNode('businessHoursNode')}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-white border-2 border-lumen-navy hover:bg-cyan-600 hover:text-white transition-all hover:-translate-y-0.5 hover:translate-x-0.5 hover:shadow-none shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] group rounded-none"
+              >
+                <Clock className="w-4 h-4" />
+                <span className="font-black text-[11px] uppercase tracking-wider">Expediente Manual</span>
+              </button>
             </div>
           </div>
 
@@ -393,6 +438,14 @@ export function FlowBuilder({
               >
                 <Save className="w-4 h-4" />
                 <span className="font-black text-[11px] uppercase tracking-wider">Salvar no Banco</span>
+              </button>
+
+              <button 
+                onClick={() => addNode('taggingNode')}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-white border-2 border-lumen-navy hover:bg-lumen-navy hover:text-white transition-all hover:-translate-y-0.5 hover:translate-x-0.5 hover:shadow-none shadow-[2px_2px_0px_0px_rgba(15,23,42,1)] group rounded-none"
+              >
+                <Tag className="w-4 h-4" />
+                <span className="font-black text-[11px] uppercase tracking-wider">Etiquetar Contato</span>
               </button>
             </div>
           </div>

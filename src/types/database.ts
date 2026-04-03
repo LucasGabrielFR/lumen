@@ -121,6 +121,7 @@ export type Database = {
       }
       automation_sessions: {
         Row: {
+          call_stack: Json | null
           current_flow_id: string | null
           current_node_id: string | null
           id: string
@@ -131,6 +132,7 @@ export type Database = {
           variables: Json | null
         }
         Insert: {
+          call_stack?: Json | null
           current_flow_id?: string | null
           current_node_id?: string | null
           id?: string
@@ -141,6 +143,7 @@ export type Database = {
           variables?: Json | null
         }
         Update: {
+          call_stack?: Json | null
           current_flow_id?: string | null
           current_node_id?: string | null
           id?: string
@@ -160,6 +163,139 @@ export type Database = {
           },
           {
             foreignKeyName: "automation_sessions_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_analytics_metrics: {
+        Row: {
+          count: number | null
+          created_at: string | null
+          date: string | null
+          flow_id: string | null
+          id: string
+          metadata: Json | null
+          metric_type: string
+          parish_id: string | null
+        }
+        Insert: {
+          count?: number | null
+          created_at?: string | null
+          date?: string | null
+          flow_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          parish_id?: string | null
+        }
+        Update: {
+          count?: number | null
+          created_at?: string | null
+          date?: string | null
+          flow_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          parish_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_analytics_metrics_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "automation_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flow_analytics_metrics_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parishioners: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          parish_id: string | null
+          phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          parish_id?: string | null
+          phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          parish_id?: string | null
+          phone?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parishioners_parish_id_fkey"
+            columns: ["parish_id"]
+            isOneToOne: false
+            referencedRelation: "parishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_topic: string | null
+          metadata: Json | null
+          name: string | null
+          parish_id: string | null
+          phone: string
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_topic?: string | null
+          metadata?: Json | null
+          name?: string | null
+          parish_id?: string | null
+          phone: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_topic?: string | null
+          metadata?: Json | null
+          name?: string | null
+          parish_id?: string | null
+          phone?: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contacts_parish_id_fkey"
             columns: ["parish_id"]
             isOneToOne: false
             referencedRelation: "parishes"

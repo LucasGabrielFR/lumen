@@ -15,8 +15,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **Gestão de Keywords Integrada**: Migração da configuração de palavras-chave (Keywords) do menu lateral externo para o `SettingsDrawer` interno do FlowBuilder, unificando a configuração do fluxo em um único local.
 - **Modo Tela Total (Canvas Expanded)**: Estratégia de layout na `FlowsPage` que remove as colunas laterais, permitindo que o editor de fluxos ocupe 100% da largura da tela.
 - **Sanitização de Nomes**: O motor agora remove automaticamente as chaves `{{}}` caso o usuário as digite no campo "Nome da Variável", garantindo integridade no banco de dados.
+- **Nó de Sub-Fluxo (Call Stack)**: Implementação de pilhas de execução (`call_stack`) no Interpretador, permitindo chamar um fluxo secundário e retornar automaticamente ao fluxo pai quando o sub-fluxo for concluído.
+- **Sub-Fluxo Dinâmico**: O nó de sub-fluxo agora carrega automaticamente uma lista suspensa (dropdown) com todos os fluxos salvos da paróquia, eliminando a necessidade de digitar o ID ou Nome manualmente.
+- **Nó de Horário de Expediente (Manual)**: Novo nó visual com configuração manual de horários por dia da semana (Segunda a Domingo), com ramificações automáticas para caminhos "Aberto" e "Fechado".
+- **Nó de Etiquetagem (Tags & Topics)**: Suporte a atribuição de múltiplas tags e definição de "Assunto Principal" (Topic) no contato, com atualização automática no dashboard de analytics.
+- **Nó de Tagging (Dark Theme)**: Refatoração visual do nó de etiquetagem para um tema escuro de alto contraste (`Lumen Navy`), garantindo legibilidade superior e eliminando o excesso de brilho branco no canvas.
+- **Dashboard de Analytics em Tempo Real**: Interface de análise com filtros de período (7d, 30d, 90d, Tudo) e métricas quantificadoras de mensagens, automações, transbordos e tópicos mais procurados.
 
-### Removed
+### Fixed
+- **Sintaxe JSX**: Corrigido erro de "Adjacent JSX elements" no `TaggingNode.tsx` causado por fechamento duplicado de tags.
+- **Contraste de Interface**: Ajustados inputs e botões do nó de etiquetagem para cores escuras e bordas iluminadas.
 - **Barra Lateral de Etapas**: Remoção definitiva da barra lateral esquerda de "Etapas do Chat" e "Acionadores" na página de fluxos para reduzir a carga cognitiva e priorizar a visualização do grafo.
 
 ### Changed

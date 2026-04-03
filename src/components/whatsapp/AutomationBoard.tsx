@@ -16,13 +16,17 @@ import {
   CheckCircle2,
   Smartphone,
   ChevronRight,
-  QrCode,
+  Database,
+  TrendingUp,
+  Calendar,
   Hash,
-  Database
+  QrCode
 } from 'lucide-react'
+import { subDays, startOfDay } from 'date-fns'
 import { whatsappService } from '../../lib/whatsapp'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { AnalyticsDashboard } from './AnalyticsDashboard'
 
 export const AutomationBoard = () => {
   const { profile } = useAuth()
@@ -36,6 +40,8 @@ export const AutomationBoard = () => {
   const [isInitializing, setIsInitializing] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [initError, setInitError] = useState<string | null>(null)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d')
 
   // Load existing token and check instance existence on mount
   useEffect(() => {
@@ -305,46 +311,130 @@ export const AutomationBoard = () => {
 
   const automationFlows = flowsData || []
 
+  // Fetch Summary Metrics
+  const { data: metricsSummary } = useQuery({
+    queryKey: ['flow_metrics_summary', profile?.parish_id, dateRange],
+    queryFn: async () => {
+      if (!profile?.parish_id) return null
+      
+      let query = supabase
+        .from('flow_analytics_metrics')
+        .select('metric_type, count')
+        .eq('parish_id', profile.parish_id)
+
+      if (dateRange !== 'all') {
+        const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90
+        const startDate = startOfDay(subDays(new Date(), days)).toISOString()
+        query = query.gte('date', startDate)
+      }
+
+      const { data, error } = await query
+      
+      if (error) throw error
+      
+      const summary = {
+        total_messages: data.filter(m => m.metric_type === 'message_in').reduce((acc, m) => acc + (m.count || 0), 0),
+        total_automated: data.filter(m => !['message_in', 'handoff', 'session_completed'].includes(m.metric_type)).reduce((acc, m) => acc + (m.count || 0), 0),
+        handoffs: data.filter(m => m.metric_type === 'handoff').reduce((acc, m) => acc + (m.count || 0), 0),
+        completed: data.filter(m => m.metric_type === 'session_completed').reduce((acc, m) => acc + (m.count || 0), 0)
+      }
+      
+      const resolutionRate = summary.completed > 0 
+        ? Math.round((summary.completed / (summary.completed + summary.handoffs)) * 100)
+        : 0
+
+      return { ...summary, resolution_rate: resolutionRate }
+    },
+    enabled: !!profile?.parish_id
+  })
+
+  if (showAnalytics) {
+    return (
+      <AnalyticsDashboard 
+        onBack={() => setShowAnalytics(false)} 
+        initialDateRange={dateRange}
+      />
+    )
+  }
+
   return (
     <div className="flex flex-col gap-8">
-      {/* Header com Status da Instância */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-lumen-navy flex items-center gap-3">
-            Automação de Atendimento
-            <span className="bg-lumen-gold/10 text-lumen-gold text-[10px] uppercase tracking-wider px-2 py-1 rounded-lg border border-lumen-gold/20 font-black">Beta</span>
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-3xl font-black text-lumen-navy flex items-center gap-3 lowercase">
+            whatsapp
+            <span className="bg-emerald-500 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded-md">LIVE</span>
           </h2>
-          <p className="text-slate-500 font-medium">Conecte o WhatsApp e automatize a paróquia sem QR Code.</p>
+          <p className="text-slate-500 font-medium text-sm">Automação de atendimentos e métricas analíticas</p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-          {isLoadingStatus || isInitializing ? (
-            <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-          ) : (
-            <div className={`w-3 h-3 rounded-full ${isInstanceActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-          )}
-          <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">
-            {isInitializing ? 'Preparando...' : isInstanceActive ? 'Conectado' : 'Aguardando Conexão'}
-          </span>
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Date Range Selector */}
+          <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md">
+            <div className="bg-slate-50 p-2 rounded-xl text-slate-400 mr-1">
+              <Calendar className="w-4 h-4" />
+            </div>
+            {[
+              { id: '7d', label: '7D' },
+              { id: '30d', label: '30D' },
+              { id: '90d', label: '90D' },
+              { id: 'all', label: 'Tudo' }
+            ].map((range) => (
+              <button
+                key={range.id}
+                onClick={() => setDateRange(range.id as any)}
+                className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all duration-300 ${
+                  dateRange === range.id 
+                    ? 'bg-lumen-navy text-white shadow-lg shadow-lumen-navy/20' 
+                    : 'text-slate-400 hover:text-lumen-navy hover:bg-slate-50'
+                }`}
+              >
+                {range.label}
+              </button>
+            ))}
+          </div>
 
-          <button 
-            onClick={() => refetchStatus()}
-            className="ml-4 bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-xl transition-all"
-            title="Atualizar Status"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoadingStatus ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="h-8 w-px bg-slate-100 hidden md:block" />
 
-          {needsSync && isInstanceActive && (
-            <button
-              onClick={syncWithDatabase}
-              disabled={isSyncing}
-              className="ml-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm shadow-emerald-200 animate-in fade-in zoom-in duration-300"
+          {/* Instance Status */}
+          <div className="flex items-center gap-3 bg-white pl-4 pr-2 py-2 rounded-2xl shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2">
+              {isLoadingStatus || isInitializing ? (
+                <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
+              ) : (
+                <div className={`w-2 h-2 rounded-full ${isInstanceActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              )}
+              <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-none">
+                {isInitializing ? 'Preparando...' : isInstanceActive ? 'Conectado' : 'Desconectado'}
+              </span>
+            </div>
+
+            <button 
+              onClick={() => refetchStatus()}
+              className="bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-lumen-navy p-1.5 rounded-xl transition-all"
             >
-              {isSyncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Database className="w-3 h-3" />}
-              Sincronizar com o banco
+              <RefreshCw className={`w-3 h-3 ${isLoadingStatus ? 'animate-spin' : ''}`} />
             </button>
-          )}
+
+            {needsSync && isInstanceActive && (
+              <button
+                onClick={syncWithDatabase}
+                disabled={isSyncing}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm shadow-emerald-200 animate-in fade-in zoom-in duration-300"
+              >
+                {isSyncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Database className="w-3 h-3" />}
+                Sincronizar
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={() => setShowAnalytics(true)}
+            className="flex items-center gap-2 bg-lumen-navy text-white px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-lumen-navy/10 group"
+          >
+            <TrendingUp className="w-4 h-4 group-hover:animate-bounce" />
+            Métricas
+          </button>
         </div>
       </div>
 
@@ -576,25 +666,37 @@ export const AutomationBoard = () => {
         <div className="lg:col-span-2 space-y-8">
           {/* Métricas Rápidas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
+             <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 relative group overflow-hidden">
                 <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4 text-indigo-500">
                    <MessageSquare className="w-6 h-6" />
                 </div>
-                <h5 className="text-3xl font-black text-slate-800">1,284</h5>
+                <h5 className="text-3xl font-black text-slate-800">
+                  {metricsSummary?.total_messages.toLocaleString() || '0'}
+                </h5>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Total de Mensagens</p>
+                <button 
+                  onClick={() => setShowAnalytics(true)}
+                  className="absolute top-4 right-4 p-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-50 rounded-lg text-slate-400 hover:text-lumen-navy"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                </button>
              </div>
              <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
                 <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4 text-emerald-500">
                    <Zap className="w-6 h-6" />
                 </div>
-                <h5 className="text-3xl font-black text-slate-800">469</h5>
+                <h5 className="text-3xl font-black text-slate-800">
+                  {metricsSummary?.total_automated.toLocaleString() || '0'}
+                </h5>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Ações Automatizadas</p>
              </div>
              <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
                 <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-4 text-amber-500">
                    <Activity className="w-6 h-6" />
                 </div>
-                <h5 className="text-3xl font-black text-slate-800">92%</h5>
+                <h5 className="text-3xl font-black text-slate-800">
+                  {metricsSummary?.resolution_rate || '0'}%
+                </h5>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Taxa de Resolução</p>
              </div>
           </div>
